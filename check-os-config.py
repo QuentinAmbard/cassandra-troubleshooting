@@ -92,7 +92,7 @@ def analyse(host):
                 result = {"command": command_name, "value": command_return, "name": command["name"]}
                 if "equals" in command:
                     result.update({"type": "equals", "expected": command["equals"]})
-                    result["state"] = "error" if command_return != command["equals"] else "success"
+                    result["state"] = "error" if command_return.replace("\n", "") != command["equals"].replace("\n", "") else "success"
                 elif "contains" in command:
                     result.update({"type": "contains", "expected": command["contains"]})
                     regexp = re.compile(r''+command["contains"])
