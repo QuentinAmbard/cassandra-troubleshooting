@@ -8,13 +8,13 @@ import argparse
 
 
 parser = argparse.ArgumentParser(description='Check DSE configuration file on multiple nodes.')
-parser.add_argument('--no-yaml', dest='enable_yaml', action='store_false')
+parser.add_argument('--no-yaml', dest='enable_yaml', action='store_false', help="disable advanced yaml check, just do checksum like other files.")
 parser.set_defaults(no_yaml=True)
 parser.add_argument('--user',  type=str, default="root", help='SSH user')
 parser.add_argument('--key',  type=str, default="~/.ssh/bootcamp", help='SSH key path, eg: ~/.ssh/bootcamp')
 parser.add_argument('--hosts',  type=str, default="127.0.0.1", help='list of machine you want to monitor, eg: 127.0.0.2,127.0.0.1')
 parser.add_argument('--files',  type=str, default="/etc/dse/cassandra/cassandra.yaml,/etc/dse/dse.yaml,/var/lib/datastax-agent/conf/address.yaml,/etc/dse/dse-env.sh,/etc/default/dse,/etc/dse/cassandra/cassandra-rackdc.properties,/etc/dse/cassandra/jvm.options,/etc/dse/cassandra/cassandra-env.sh,/etc/dse/cassandra/cqlshrc.default,/etc/dse/cassandra/logback.xml,/etc/dse/cassandra/jmxremote.password,/etc/dse/cassandra/hotspot_compiler,/etc/dse/spark/spark-env.sh,/etc/dse/spark/dse-spark-env.sh,/etc/dse/spark/java-opts,/etc/dse/spark/spark-defaults.conf",
-                    help='list of machine you want to monitor, eg: 127.0.0.2,127.0.0.1')
+                    help='list of files to compare, eg: /etc/dse/cassandra/cassandra.yaml,/etc/dse/dse.yaml,/var/lib/datastax-agent/conf/address.yaml')
 args = parser.parse_args()
 
 if args.enable_yaml:

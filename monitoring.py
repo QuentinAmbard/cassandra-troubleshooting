@@ -10,21 +10,21 @@ import csv
 import argparse
 import sys
 parser = argparse.ArgumentParser(description='Display stats for multiple nodes')
-parser.add_argument('--dump', dest='dump_result', action='store_true')
+parser.add_argument('--hosts', type=str, default="127.0.0.1", help='list of machine you want to monitor, eg: 127.0.0.1,127.0.0.2')
+parser.add_argument('--user', type=str, default="root", help='SSH user')
+parser.add_argument('--key', type=str, default="", help='SSH key path, eg: ~/.ssh/id_rsa')
+parser.add_argument('--dump', dest='dump_result', action='store_true', help='dump the result to a local csv file.')
 parser.set_defaults(dump_result=False)
 parser.add_argument('--dump_to', type=str, default="./monitoring-"+datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H:%M:%S')+".csv",
                     help='save the results to the given file. Not saved if empty')
-parser.add_argument('--big_screen', dest='small_screen', action='store_false')
+parser.add_argument('--big-screen', dest='small_screen', action='store_false')
 parser.set_defaults(small_screen=True)
-parser.add_argument('--exclude_lo', dest='exclude_lo', action='store_true', help="Exclude l0 while reading rx and tx stats. Don't change the total failed/active connection.")
+parser.add_argument('--exclude-lo', dest='exclude_lo', action='store_true', help="Exclude l0 while reading rx and tx stats. Don't change the total failed/active connection.")
 parser.set_defaults(exclude_lo=False)
-parser.add_argument('--user',  type=str, default="root", help='SSH user')
-parser.add_argument('--hosts',  type=str, default="146.148.118.87", help='list of machine you want to monitor, eg: 146.148.118.87,127.0.0.1')
-parser.add_argument('--gc_log_file',  type=str, default="", help='gc log file path, eg: "/opt/cassandra/logs/gc.log.*.current".  Change to None or "" to disable')
-parser.add_argument('--log_file',  type=str, default="", help='cassandra log file path, eg: "/var/log/system.log". Count errors and warns. Change to None or "" to disable')
+parser.add_argument('--gc_log_file',  type=str, default="/var/log/cassandra/gc.log", help='gc log file path, eg: "/opt/cassandra/logs/gc.log.*.current".  Change to None or "" to disable')
+parser.add_argument('--log_file',  type=str, default="/var/log/system.log", help='cassandra log file path, eg: "/var/log/system.log". Count errors and warns. Change to None or "" to disable')
 parser.add_argument('--log_grep_freq',  type=int, default=10, help='error & warn use grep | wc to count errors on the log file. Change this value if you don\'t want to grep too often.')
 parser.add_argument('--measure_frequency',  type=int, default=1, help='all other measure frequency (in sec).')
-parser.add_argument('--key',  type=str, default="", help='SSH key path, eg: ~/.ssh/id_rsa')
 
 args = parser.parse_args()
 
@@ -346,8 +346,8 @@ def execute_remote_command(host):
                     gc_command + \
                   ' ; echo "__END__" ; sleep '+str(args.measure_frequency)+'; done'
         p = subprocess.Popen("ssh -o StrictHostKeychecking=no "+("" if args.key == "" else "-i "+args.key+" ") +args.user+"@"+host+" '"+ command+"'", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        print "ssh -o StrictHostKeychecking=no "+args.user+"@"+host+" '"+ command+"'"
-        print 'Connected to '+args.user+'@'+host+'. Listening updates'
+        #print "ssh -o StrictHostKeychecking=no "+args.user+"@"+host+" '"+ command+"'"
+        #print 'Connected to '+args.user+'@'+host+'. Listening updates'
         buffer = []
         while True:
             line = p.stdout.readline()

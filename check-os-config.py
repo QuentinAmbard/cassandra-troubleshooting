@@ -8,7 +8,6 @@ parser = argparse.ArgumentParser(description='Check os configuration on multiple
 parser.add_argument('--user',  type=str, default="root", help='SSH user')
 parser.add_argument('--hosts',  type=str, default="127.0.0.1", help='list of machine you want to monitor, eg: 127.0.0.1,127.0.0.2')
 parser.add_argument('--key',  type=str, default="", help='SSH key path, eg: ~/.ssh/id_rsa')
-parser.add_argument('--ports',  type=str, default="22 61620 7000 7001 9042 9160 61621 8609 8182", help='list of port to check')
 
 args = parser.parse_args()
 
