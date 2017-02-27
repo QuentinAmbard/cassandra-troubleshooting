@@ -345,7 +345,7 @@ def execute_remote_command(host):
                   ' ; echo "__DATE__$(($(date +%s%N)/1000000))"' + \
                     gc_command + \
                   ' ; echo "__END__" ; sleep '+str(args.measure_frequency)+'; done'
-        p = subprocess.Popen("ssh -o StrictHostKeychecking=no "+("" if args.key == "" else "-i "+args.key+" ") +args.user+"@"+host+" '"+ command+"'", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p = subprocess.Popen("ssh -po StrictHostKeychecking=no "+("" if args.key == "" else "-i "+args.key+" ") +args.user+"@"+host+" '"+ command+"'", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         #print "ssh -o StrictHostKeychecking=no "+args.user+"@"+host+" '"+ command+"'"
         #print 'Connected to '+args.user+'@'+host+'. Listening updates'
         buffer = []

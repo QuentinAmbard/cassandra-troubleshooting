@@ -20,26 +20,26 @@ args.hosts = args.hosts.replace(" ", "").split(",")
 commands = {
     #Network checks
     "network": {"commands": [
-        {"name": "net.core.rmem_max", "command": "sysctl net.core.rmem_max","contains": "=\s?16777216$"},
-        {"name": "net.core.wmem_max", "command": "sysctl net.core.wmem_max","contains": "=\s?16777216$"},
-        {"name": "net.core.rmem_default" ,"command": "sysctl net.core.rmem_default","contains": "=\s?16777216$"},
-        {"name": "net.core.wmem_default", "command": "sysctl net.core.wmem_default","contains": "=\s?16777216$"},
-        {"name": "net.core.optmem_max", "command": "sysctl net.core.optmem_max","contains": "=\s?40960$"},
-        {"name": "net.ipv4.tcp_rmem", "command": "sysctl net.ipv4.tcp_rmem","contains": "=\s?4096\s87380\s16777216$"},
-        {"name": "net.ipv4.tcp_wmem", "command": "sysctl net.ipv4.tcp_wmem","contains": "=\s?4096\s87380\s16777216$"},
-        {"name": "vm.max_map_count", "command": "sysctl vm.max_map_count","contains": "=\s?1048575$"},
-        {"name": "net.ipv4.tcp_moderate_rcvbuf", "command": "sysctl net.ipv4.tcp_moderate_rcvbuf","contains": "=\s?1$"},
-        {"name": "net.ipv4.tcp_no_metrics_save", "command": "sysctl net.ipv4.tcp_no_metrics_save","contains": "=\s?1$"},
-        {"name": "net.ipv4.tcp_mtu_probing", "command": "sysctl net.ipv4.tcp_mtu_probing","contains": "=\s?1$"},
-        {"name": "net.core.default_qdisc", "command": "sysctl net.core.default_qdisc","contains": "=\s?fq$"}
+        {"name": "net.core.rmem_max", "command": "/sbin/sysctl net.core.rmem_max","contains": "=\s?16777216$"},
+        {"name": "net.core.wmem_max", "command": "/sbin/sysctl net.core.wmem_max","contains": "=\s?16777216$"},
+        {"name": "net.core.rmem_default" ,"command": "/sbin/sysctl net.core.rmem_default","contains": "=\s?16777216$"},
+        {"name": "net.core.wmem_default", "command": "/sbin/sysctl net.core.wmem_default","contains": "=\s?16777216$"},
+        {"name": "net.core.optmem_max", "command": "/sbin/sysctl net.core.optmem_max","contains": "=\s?40960$"},
+        {"name": "net.ipv4.tcp_rmem", "command": "/sbin/sysctl net.ipv4.tcp_rmem","contains": "=\s?4096\s87380\s16777216$"},
+        {"name": "net.ipv4.tcp_wmem", "command": "/sbin/sysctl net.ipv4.tcp_wmem","contains": "=\s?4096\s87380\s16777216$"},
+        {"name": "vm.max_map_count", "command": "/sbin/sysctl vm.max_map_count","contains": "=\s?1048575$"},
+        {"name": "net.ipv4.tcp_moderate_rcvbuf", "command": "/sbin/sysctl net.ipv4.tcp_moderate_rcvbuf","contains": "=\s?1$"},
+        {"name": "net.ipv4.tcp_no_metrics_save", "command": "/sbin/sysctl net.ipv4.tcp_no_metrics_save","contains": "=\s?1$"},
+        {"name": "net.ipv4.tcp_mtu_probing", "command": "/sbin/sysctl net.ipv4.tcp_mtu_probing","contains": "=\s?1$"},
+        {"name": "net.core.default_qdisc", "command": "/sbin/sysctl net.core.default_qdisc","contains": "=\s?fq$"}
     ]},
     #Memory checks
     "memory": {"commands": [
-        {"name": "vm.min_free_kbytes", "command": "sysctl vm.min_free_kbytes","contains": "=\s?1048576$"},
-        {"name": "vm.dirty_background_ratio", "command": "sysctl vm.dirty_background_ratio","contains": "=\s?5$"},
-        {"name": "vm.dirty_ratio", "command": "sysctl vm.dirty_ratio","contains": "=\s?10$"},
-        {"name": "vm.zone_reclaim_mode", "command": "sysctl vm.zone_reclaim_mode","contains": "=\s?0$"},
-        {"name": "vm.swappiness", "command": "sysctl vm.swappiness","contains": "=\s1$"},
+        {"name": "vm.min_free_kbytes", "command": "/sbin/sysctl vm.min_free_kbytes","contains": "=\s?1048576$"},
+        {"name": "vm.dirty_background_ratio", "command": "/sbin/sysctl vm.dirty_background_ratio","contains": "=\s?5$"},
+        {"name": "vm.dirty_ratio", "command": "/sbin/sysctl vm.dirty_ratio","contains": "=\s?10$"},
+        {"name": "vm.zone_reclaim_mode", "command": "/sbin/sysctl vm.zone_reclaim_mode","contains": "=\s?0$"},
+        {"name": "vm.swappiness", "command": "/sbin/sysctl vm.swappiness","contains": "=\s1$"},
         {"name": "swap off", "command": "free", "contains": "Swap:\s*0\s*0\s*0"},
         {"name": "transparent_hugepage defrag", "command": "cat /sys/kernel/mm/transparent_hugepage/defrag", "contains": "\[never\]"},
         {"name": "transparent_hugepage disabled", "command": "cat /sys/kernel/mm/transparent_hugepage/enabled", "contains": "\[never\]"}
@@ -55,10 +55,10 @@ commands = {
     ]},
     #limits checks
     "ulimits": {"commands": [
-        {"name": "Max Locked Memory", "command": 'cat /proc/\$(pgrep -f cassandra | head -n 1)/limits',"contains": "Max locked memory\s*unlimited\s*unlimited"},
-        {"name": "Max file locks", "command": 'cat /proc/\$(pgrep -f cassandra | head -n 1)/limits',"contains": "Max file locks\s*(unlimited|100000)\s*(unlimited|100000)"},
-        {"name": "Max processes", "command": 'cat /proc/\$(pgrep -f cassandra | head -n 1)/limits',"contains": "Max processes\s*(unlimited|32768)\s*(unlimited|32768)"},
-        {"name": "Max resident", "command": 'cat /proc/\$(pgrep -f cassandra | head -n 1)/limits',"contains": "Max resident set\s*unlimited\s*unlimited"}
+        {"name": "Max Locked Memory", "command": 'cat /proc/\$(pgrep -f dse | head -n 1)/limits',"contains": "Max locked memory\s*unlimited\s*unlimited"},
+        {"name": "Max file locks", "command": 'cat /proc/\$(pgrep -f dse | head -n 1)/limits',"contains": "Max file locks\s*(unlimited|100000)\s*(unlimited|100000)"},
+        {"name": "Max processes", "command": 'cat /proc/\$(pgrep -f dse | head -n 1)/limits',"contains": "Max processes\s*(unlimited|32768)\s*(unlimited|32768)"},
+        {"name": "Max resident", "command": 'cat /proc/\$(pgrep -f dse | head -n 1)/limits',"contains": "Max resident set\s*unlimited\s*unlimited"}
     ]}}
 
 def clean(line):
@@ -81,7 +81,7 @@ def analyse(host):
                 command_name = "sudo "+command["command"].format(**var)
                 all_command += command_name
 
-            command_full = 'ssh -o "StrictHostKeyChecking no" '+("" if args.key == "" else "-i "+args.key+" ") + args.user+'@'+host+' "'+all_command+'"'
+            command_full = 'ssh -qo "StrictHostKeyChecking no" '+("" if args.key == "" else "-i "+args.key+" ") + args.user+'@'+host+' "'+all_command+'"'
             p = subprocess.Popen(command_full, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             lines = p.stdout.readlines()
             command_return = clean("".join(lines))
