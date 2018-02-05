@@ -8,6 +8,9 @@ parser = argparse.ArgumentParser(description='Check os configuration on multiple
 parser.add_argument('--user',  type=str, default="root", help='SSH user')
 parser.add_argument('--hosts',  type=str, default="127.0.0.1", help='list of machine you want to monitor, eg: 127.0.0.1,127.0.0.2')
 parser.add_argument('--key',  type=str, default="", help='SSH key path, eg: ~/.ssh/id_rsa')
+parser.add_argument('--disks',  type=str, default="sda", help='list of disks to check, ex: sda,sdb')
+parser.add_argument('--local', dest='local_check', action='store_true', help='Execute check locally. Won\'t open a ssj connection')
+parser.set_defaults(local_check=False)
 
 args = parser.parse_args()
 
@@ -16,6 +19,10 @@ if len(args.hosts) == 0:
     sys.exit('Hosts missing. Add host using --host=127.0.0.1')
 
 args.hosts = args.hosts.replace(" ", "").split(",")
+disks = []
+for disk in args.disks.replace(" ", "").split(","):
+    disks.append({"disk": disk})
+print(disks)
 
 commands = {
     #Network checks
@@ -42,23 +49,25 @@ commands = {
         {"name": "vm.swappiness", "command": "/sbin/sysctl vm.swappiness","contains": "=\s1$"},
         {"name": "swap off", "command": "free", "contains": "Swap:\s*0\s*0\s*0"},
         {"name": "transparent_hugepage defrag", "command": "cat /sys/kernel/mm/transparent_hugepage/defrag", "contains": "\[never\]"},
-        {"name": "transparent_hugepage disabled", "command": "cat /sys/kernel/mm/transparent_hugepage/enabled", "contains": "\[never\]"}
+        {"name": "scaling_governor should be disabled or set to performance", "command": "cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor", "contains": "(performance|)"}
+        
+        #{"name": "transparent_hugepage disabled", "command": "cat /sys/kernel/mm/transparent_hugepage/enabled", "contains": "\[never\]"}
     ]},
     #SSD checks
    "ssd": {
-       "vars": [{"disk": "xvda1"}], #"vars": [{"disk": "sda1"}, {"disk": "sda2"}],
+       "vars": disks, #"vars": [{"disk": "sda1"}, {"disk": "sda2"}],
        "commands": [
-        {"name": "disks 4k blocks", "command": "fdisk -l /dev/{disk}","contains": "I/O size (minimum/optimal): 4096 bytes / 4096 bytes"},
+        #{"name": "disks 4k blocks", "command": "fdisk -l /dev/{disk}","contains": "I/O size (minimum/optimal): 4096 bytes / 4096 bytes"},
         {"name": "scheduler deadline", "command": "cat /sys/block/{disk}/queue/scheduler","contains": "\[deadline\]"},
         {"name": "rotational 0", "command": "cat /sys/class/block/{disk}/queue/rotational","equals": "0"},
         {"name": "read ahead 8k", "command": "cat /sys/class/block/{disk}/queue/read_ahead_kb","equals": "8"}
     ]},
     #limits checks
     "ulimits": {"commands": [
-        {"name": "Max Locked Memory", "command": 'cat /proc/\$(pgrep -f dse | head -n 1)/limits',"contains": "Max locked memory\s*unlimited\s*unlimited"},
-        {"name": "Max file locks", "command": 'cat /proc/\$(pgrep -f dse | head -n 1)/limits',"contains": "Max file locks\s*(unlimited|100000)\s*(unlimited|100000)"},
-        {"name": "Max processes", "command": 'cat /proc/\$(pgrep -f dse | head -n 1)/limits',"contains": "Max processes\s*(unlimited|32768)\s*(unlimited|32768)"},
-        {"name": "Max resident", "command": 'cat /proc/\$(pgrep -f dse | head -n 1)/limits',"contains": "Max resident set\s*unlimited\s*unlimited"}
+        {"name": "Max Locked Memory", "command": 'cat /proc/$DSE_PID/limits',"contains": "Max locked memory\s*unlimited\s*unlimited"},
+        {"name": "Max file locks", "command": 'cat /proc/$DSE_PID/limits',"contains": "Max file locks\s*(unlimited|100000)\s*(unlimited|100000)"},
+        {"name": "Max processes", "command": 'cat /proc/$DSE_PID/limits',"contains": "Max processes\s*(unlimited|32768)\s*(unlimited|32768)"},
+        {"name": "Max resident", "command": 'cat /proc/$DSE_PID/limits',"contains": "Max resident set\s*unlimited\s*unlimited"}
     ]}}
 
 def clean(line):
@@ -78,16 +87,19 @@ def analyse(host):
             for command in config["commands"]:
                 if all_command != "":
                     all_command += " ; echo '__SEPARATOR__' ; "
-                command_name = "sudo "+command["command"].format(**var)
+                command_name = "DSE_PID=$(ps -ef | grep DseMod | grep -v grep | awk '{{print $2}}' | head -n 1) ; "+command["command"].format(**var)
                 all_command += command_name
+            if args.local_check:
+                command_full = all_command
+            else:
+                command_full = 'ssh -qo "StrictHostKeyChecking no" '+("" if args.key == "" else "-i "+args.key+" ") + args.user+'@'+host+' "'+all_command+'"'
 
-            command_full = 'ssh -qo "StrictHostKeyChecking no" '+("" if args.key == "" else "-i "+args.key+" ") + args.user+'@'+host+' "'+all_command+'"'
             p = subprocess.Popen(command_full, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             lines = p.stdout.readlines()
             command_return = clean("".join(lines))
             command_returns = command_return.split("__SEPARATOR__")
             for idx, command in enumerate(config["commands"]):
-                command_name = "sudo "+command["command"].format(**var)
+                command_name = " "+command["command"].format(**var)
                 command_return = command_returns[idx]
                 result = {"command": command_name, "value": command_return, "name": command["name"]}
                 if "equals" in command:
@@ -98,7 +110,7 @@ def analyse(host):
                     regexp = re.compile(r''+command["contains"])
                     result["state"] = "error" if regexp.search(command_return) is None else "success"
                 results[group_name].append(result)
-
+    re.sub('[ES]', 'a', s)
     mutex.acquire()
     try:
         print "--------------------------------------------"
@@ -109,7 +121,7 @@ def analyse(host):
             error = 0
             for v in values:
                 if v["state"] != "success":
-                    print "   \033[91m"+(v["state"]+" "+v["name"]+":\033[0m").ljust(40, " ")+"\t "+v["command"].ljust(50, " ")+" \t\t"+v["expected"].ljust(50, " ")+"\t\t "+v["value"].replace("\n", ' ')
+                    print "   \033[91m"+(v["state"]+" "+v["name"]+":\033[0m").ljust(40, " ")+"\t "+v["command"].ljust(50, " ")+" \t\t"+v["expected"].ljust(50, " ")+"\t\t "+v["value"].replace("^\s*\n", ' ')
                     error = error +1
             if error == 0:
                 print "Ok"
@@ -126,4 +138,5 @@ for host in args.hosts:
 
 for t in threads:
     t.join()
+
 
